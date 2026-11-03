@@ -1,8 +1,16 @@
-import { QUESTIONS } from "../../lib/quiz.js";
+import { QUESTIONS, configured } from "../../lib/quiz.js";
 
-export async function onRequestGet() {
+export async function onRequestGet({ env }) {
+  let configuration = null;
+  try {
+    if (env.QUIZ_RESULTS) configuration = await env.QUIZ_RESULTS.get("config:q7", "json");
+  } catch {
+    // Настройки недоступны — не обещаем, что тест можно завершить.
+  }
+
   return new Response(JSON.stringify({
-    questions: QUESTIONS.map((q) => ({ id: q.id, title: q.title, options: q.options }))
+    ready: Boolean(env.QUIZ_RESULTS && configured(configuration)),
+    questions: QUESTIONS.map(({ id, title, options }) => ({ id, title, options }))
   }), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
