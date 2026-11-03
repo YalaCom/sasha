@@ -1,63 +1,89 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#fff7f5">
-  <meta name="description" content="Маленькая игра с большим сюрпризом 💅">
-  <title>Миссия: ноготочки 💅</title>
+  <meta name="theme-color" content="#170f17">
+  <meta name="description" content="Восемь вопросов для любимой жены. Приз — оплата маникюра.">
+  <title>Любимая жена — твой особенный приз</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
-<body class="game-page">
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
-  <div class="site-layout">
-    <header class="topbar">
-      <a class="wordmark" href="/" aria-label="Главная">♡ <span>love quest</span></a>
-      <span class="topbar-note">Сделано с любовью</span>
+<body class="wife-page">
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="app-frame">
+    <header class="site-header">
+      <div class="brand"><span class="brand-symbol" aria-hidden="true">♡</span><span>ЛЮБИМАЯ ЖЕНА</span></div>
+      <span class="header-caption">ДЛЯ ТЕБЯ</span>
     </header>
+    <main class="experience" id="main-content">
+      <div class="film-top" aria-hidden="true"><span></span><i>✦</i><span></span></div>
 
-    <main class="game-card">
-      <section id="intro">
-        <div class="tag"><span class="tag-dot"></span> МАЛЕНЬКИЙ СЮРПРИЗ ДЛЯ ТЕБЯ</div>
-        <div class="hero-art" aria-hidden="true"><span class="art-star art-star-left">✧</span><span class="nail-emoji">💅</span><span class="art-star art-star-right">✦</span></div>
-        <h1>Любимая, тут<br>кое-что <em>для тебя.</em></h1>
-        <p class="lead">Ответь правильно на все вопросы — и получи <strong>маникюр за мой счёт.</strong> Всё просто… почти 😉</p>
-        <label class="field-label" for="player-name">Как тебя зовут?</label>
-        <input class="text-input" id="player-name" type="text" maxlength="40" autocomplete="given-name" placeholder="Твоё красивое имя">
-        <button id="start-btn" class="button button-primary button-wide" type="button">Принимаю вызов <span aria-hidden="true">↗</span></button>
-        <p id="intro-error" class="error-message" role="alert" hidden></p>
-        <div class="micro-note"><span>✦ 4 вопроса</span><span>✦ 1 главный приз</span><span>✦ всё зависит от тебя</span></div>
+      <section class="intro scene is-active" id="intro" aria-labelledby="intro-title">
+        <div class="inner">
+          <div class="eyebrow">ВОСЕМЬ ВОПРОСОВ · ОДИН ПРИЗ</div>
+          <h1 id="intro-title">Любимая<br><em>жена</em></h1>
+          <div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
+          <p class="hero-copy">Ответь правильно на <strong>все восемь вопросов</strong> — и получи оплату маникюра.</p>
+          <div class="reward">
+            <div class="reward-icon" aria-hidden="true">✧</div>
+            <div class="reward-body">
+              <span>ГЛАВНЫЙ ПРИЗ</span>
+              <strong>Маникюр за мой счёт</strong>
+            </div>
+            <div class="reward-mark" aria-hidden="true">↗</div>
+          </div>
+          <button id="start-btn" class="btn btn-gold btn-main" type="button">
+            <span>Начать тест</span><span aria-hidden="true">→</span>
+          </button>
+          <p id="intro-error" class="inline-error" role="alert" hidden></p>
+        </div>
+        <div class="coming" aria-label="Следующий приз">
+          <div class="coming-meta"><span class="pill-outline">СКОРО</span><span class="coming-sub">СЛЕДУЮЩЕЕ ИСПЫТАНИЕ</span></div>
+          <div class="coming-title">Telegram Premium <span>на 6 месяцев</span></div>
+        </div>
       </section>
 
-      <section id="quiz" hidden>
-        <div class="quiz-top">
-          <span class="section-kicker">ТВОЯ МИССИЯ</span>
-          <span id="question-counter" class="question-counter">01 / 04</span>
+      <section class="quiz scene" id="quiz" aria-labelledby="question-title" hidden>
+        <div class="quiz-head">
+          <span class="eyebrow">ВОПРОС <span id="question-number">01</span> ИЗ 08</span>
+          <span class="quiz-counter" id="question-counter">01 / 08</span>
         </div>
-        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
-        <div class="question-label">Вопрос <span id="question-number">1</span></div>
-        <h2 id="question-title">Загружаем вопрос...</h2>
-        <p class="question-tip">Выбери один вариант ответа</p>
-        <div id="answer-options" class="answer-options"></div>
+        <div class="progress-track" role="progressbar" id="quiz-progress" aria-label="Прогресс теста" aria-valuemin="0" aria-valuemax="8" aria-valuenow="1">
+          <div class="progress-bar" id="progress-fill"></div>
+        </div>
+        <p class="question-kicker">ВЫБЕРИ ОДИН ВАРИАНТ</p>
+        <h2 id="question-title">Вопрос</h2>
+        <div id="answer-options" class="answer-options" role="group" aria-label="Варианты ответа"></div>
         <div class="quiz-actions">
-          <button id="back-btn" class="button button-quiet" type="button">← Назад</button>
-          <button id="next-btn" class="button button-primary" type="button" disabled>Дальше →</button>
+          <button id="back-btn" class="btn btn-back" type="button">← Назад</button>
+          <button id="next-btn" class="btn btn-gold btn-next" type="button" disabled>Продолжить <span aria-hidden="true">→</span></button>
         </div>
-        <p id="quiz-error" class="error-message" role="alert" hidden></p>
+        <p id="quiz-error" class="inline-error" role="alert" hidden></p>
       </section>
 
-      <section id="result" class="result-section" hidden>
-        <div id="result-icon" class="result-icon">🎉</div>
-        <span class="section-kicker">МИССИЯ ЗАВЕРШЕНА</span>
+      <section class="result scene" id="result" aria-labelledby="result-title" hidden>
+        <div class="result-crest" aria-hidden="true">✦</div>
+        <p class="eyebrow">ТЕСТ ЗАВЕРШЁН</p>
         <h2 id="result-title"></h2>
-        <p id="result-description" class="lead"></p>
-        <div class="result-score"><strong id="result-score"></strong><span>правильных ответов</span></div>
-        <p class="result-footer">Твои ответы уже отправлены организатору игры ♡</p>
+        <div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
+        <p class="result-description" id="result-description"></p>
+        <div class="result-counter"><strong id="result-score">0/8</strong><span>ПРАВИЛЬНЫХ ОТВЕТОВ</span></div>
+        <a id="telegram-link" class="btn btn-gold btn-main" target="_blank" rel="noopener noreferrer" href="https://t.me/exquown">
+          <span>Отправить результат в Telegram</span><span aria-hidden="true">↗</span>
+        </a>
+        <p class="telegram-caption">Откроется чат с @exquown, сообщение будет готово к отправке.</p>
+        <div class="coming result-coming" aria-label="Следующий приз">
+          <div class="coming-meta"><span class="pill-outline">СКОРО</span><span class="coming-sub">СЛЕДУЮЩЕЕ ИСПЫТАНИЕ</span></div>
+          <div class="coming-title">Telegram Premium <span>на 6 месяцев</span></div>
+        </div>
       </section>
+
+      <div class="film-bottom" aria-hidden="true"><span></span><i>✦</i><span></span></div>
     </main>
-    <footer class="page-footer">made with ♡ · только для тебя</footer>
   </div>
 </body>
 </html>

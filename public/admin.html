@@ -1,54 +1,79 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#171320">
-  <title>Панель администратора · Love Quest</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#170f17">
+  <title>Администратор — Любимая жена</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
   <script src="/admin.js" defer></script>
 </head>
 <body class="admin-page">
-  <div class="admin-layout">
-    <header class="admin-nav">
-      <a class="wordmark" href="/">♡ <span>love quest</span></a>
-      <a class="nav-back" href="/">← Вернуться на сайт</a>
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="admin-frame">
+    <header class="site-header">
+      <div class="brand"><span class="brand-symbol" aria-hidden="true">♡</span><span>АДМИНИСТРАТОР</span></div>
+      <a class="header-return" href="/">На сайт ↗</a>
     </header>
+
     <main class="admin-main">
-      <div class="admin-heading">
-        <span class="section-kicker">ТОЛЬКО ДЛЯ ОРГАНИЗАТОРА</span>
-        <h1>Панель <em>администратора</em></h1>
-        <p>Здесь сохраняются все попытки, выбранные ответы и результат игры.</p>
+      <div class="admin-intro">
+        <p class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</p>
+        <h1>Ответы <em>любимой жены</em></h1>
+        <p class="admin-subtitle">Дата и время прохождения, ответы и результат каждого теста.</p>
       </div>
 
-      <section id="login-panel" class="admin-login">
-        <div class="lock-graphic" aria-hidden="true">🔐</div>
+      <section id="login-panel" class="admin-panel login-panel">
         <h2>Вход в админку</h2>
-        <p>Введи пароль, который установишь в Cloudflare.</p>
+        <p>Введи пароль администратора, сохранённый в Cloudflare.</p>
         <form id="login-form">
-          <label class="field-label" for="admin-password">Пароль администратора</label>
-          <input id="admin-password" class="text-input" type="password" autocomplete="current-password" required placeholder="••••••••••••">
-          <button id="login-button" class="button button-primary button-wide" type="submit">Посмотреть ответы →</button>
+          <label for="admin-password">Пароль</label>
+          <input id="admin-password" class="admin-input" type="password" autocomplete="current-password" required placeholder="Пароль администратора">
+          <button id="login-button" class="btn btn-gold btn-main" type="submit">Войти <span aria-hidden="true">→</span></button>
         </form>
-        <p id="login-error" class="error-message" role="alert" hidden></p>
+        <p id="login-error" class="inline-error" role="alert" hidden></p>
       </section>
 
       <section id="dashboard" hidden>
-        <div class="admin-toolbar">
-          <div class="stats">
-            <div class="stat"><strong id="total-count">0</strong><span>попыток</span></div>
-            <div class="stat"><strong id="wins-count">0</strong><span>побед</span></div>
-            <div class="stat"><strong id="losses-count">0</strong><span>без победы</span></div>
-          </div>
-          <div class="toolbar-buttons">
-            <button class="button button-outline" id="refresh-button" type="button">↻ Обновить</button>
-            <button class="button button-quiet" id="logout-button" type="button">Выйти</button>
-          </div>
+        <div class="stat-grid">
+          <div class="stat-card"><span>ВСЕГО ПОПЫТОК</span><strong id="total-count">0</strong></div>
+          <div class="stat-card"><span>ПОБЕД</span><strong id="wins-count">0</strong></div>
+          <div class="stat-card"><span>НЕ ВЫИГРАЛА</span><strong id="losses-count">0</strong></div>
         </div>
-        <h2 class="list-title">История ответов <span>(последние 100)</span></h2>
-        <p id="dashboard-error" class="error-message" role="alert" hidden></p>
-        <div id="attempt-list" class="attempt-list"></div>
+        <section class="admin-panel setting-panel" aria-labelledby="setting-title">
+          <div class="section-title-row">
+            <div><p class="eyebrow">НАСТРОЙКА ТЕСТА</p><h2 id="setting-title">Правильный ответ на вопрос об отчестве</h2></div>
+            <span id="setup-status" class="setting-status">Не настроен</span>
+          </div>
+          <p class="setting-help">В сообщении ты не указал, какой из трёх вариантов правильный. Выбери его здесь один раз, чтобы тест мог определять победителя.</p>
+          <form id="settings-form">
+            <label for="q7-choice">Какое у меня было бы отчество?</label>
+            <div class="settings-actions">
+              <select id="q7-choice" class="admin-input" required>
+                <option value="">Выбери правильный ответ</option>
+              </select>
+              <button id="save-settings-button" class="btn btn-gold" type="submit">Сохранить</button>
+            </div>
+          </form>
+          <p id="settings-info" class="settings-info" role="status"></p>
+          <p id="settings-error" class="inline-error" role="alert" hidden></p>
+        </section>
+
+        <section aria-labelledby="history-title" class="history">
+          <div class="section-title-row">
+            <div><p class="eyebrow">ИСТОРИЯ ПРОХОЖДЕНИЙ</p><h2 id="history-title">Ответы и даты <span class="history-count">(последние 100)</span></h2></div>
+            <div class="action-toolbar">
+              <button id="refresh-button" class="btn btn-outline" type="button">↻ Обновить</button>
+              <button id="logout-button" class="btn btn-subtle" type="button">Выйти</button>
+            </div>
+          </div>
+          <p id="dashboard-error" class="inline-error" role="alert" hidden></p>
+          <div id="attempt-list" class="attempt-list"></div>
+        </section>
       </section>
     </main>
   </div>

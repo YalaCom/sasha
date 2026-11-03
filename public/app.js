@@ -1,131 +1,153 @@
 (() => {
   "use strict";
 
-  const byId = (id) => document.getElementById(id);
-  const intro = byId("intro");
-  const quiz = byId("quiz");
-  const result = byId("result");
-  const startButton = byId("start-btn");
-  const nextButton = byId("next-btn");
-  const backButton = byId("back-btn");
-  const optionsContainer = byId("answer-options");
-  const state = { questions: [], choices: {}, current: 0, name: "" };
+  const $ = (id) => document.getElementById(id);
+  const start = $("start-btn");
+  const next = $("next-btn");
+  const back = $("back-btn");
+  const optionBox = $("answer-options");
+  const state = { questions: [], selected: {}, position: 0, submitting: false };
 
-  function setError(id, message) {
-    const element = byId(id);
-    element.textContent = message || "";
-    element.hidden = !message;
+  function showError(id, message) {
+    const target = $(id);
+    target.textContent = message || "";
+    target.hidden = !message;
   }
 
-  function show(section) {
-    intro.hidden = section !== "intro";
-    quiz.hidden = section !== "quiz";
-    result.hidden = section !== "result";
+  function switchScene(id) {
+    for (const name of ["intro", "quiz", "result"]) {
+      $(name).hidden = name !== id;
+      $(name).classList.toggle("is-active", name === id);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function renderQuestion() {
-    const question = state.questions[state.current];
+  function render() {
+    const question = state.questions[state.position];
+    if (!question) return;
     const total = state.questions.length;
-    const selected = state.choices[question.id];
-    byId("question-counter").textContent = String(state.current + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
-    byId("progress-fill").style.width = Math.round(((state.current + 1) / total) * 100) + "%";
-    byId("question-number").textContent = String(state.current + 1);
-    byId("question-title").textContent = question.title;
+    const choice = state.selected[question.id];
+    const number = String(state.position + 1).padStart(2, "0");
+    $("question-number").textContent = number;
+    $("question-counter").textContent = number + " / " + String(total).padStart(2, "0");
+    $("progress-fill").style.width = ((state.position + 1) / total) * 100 + "%";
+    $("quiz-progress").setAttribute("aria-valuemax", String(total));
+    $("quiz-progress").setAttribute("aria-valuenow", String(state.position + 1));
+    $("question-title").textContent = question.title;
 
-    optionsContainer.replaceChildren();
-    question.options.forEach((answer, index) => {
+    optionBox.replaceChildren();
+    question.options.forEach((value, index) => {
       const button = document.createElement("button");
-      const marker = document.createElement("span");
-      const label = document.createElement("span");
       button.type = "button";
-      button.className = "answer-option" + (selected === index ? " is-selected" : "");
-      button.setAttribute("aria-pressed", String(selected === index));
-      marker.className = "option-marker";
-      marker.textContent = selected === index ? "✓" : String.fromCharCode(65 + index);
-      label.textContent = answer;
-      button.append(marker, label);
+      button.className = "answer-button" + (choice === index ? " chosen" : "");
+      button.setAttribute("aria-pressed", String(choice === index));
+      const digit = document.createElement("span");
+      digit.className = "answer-digit";
+      digit.textContent = String(index + 1).padStart(2, "0");
+      const caption = document.createElement("span");
+      caption.className = "answer-label";
+      caption.textContent = value;
+      const marker = document.createElement("span");
+      marker.className = "answer-check";
+      marker.textContent = choice === index ? "✓" : "○";
+      marker.setAttribute("aria-hidden", "true");
+      button.append(digit, caption, marker);
       button.addEventListener("click", () => {
-        state.choices[question.id] = index;
-        renderQuestion();
+        if (state.submitting) return;
+        state.selected[question.id] = index;
+        render();
       });
-      optionsContainer.append(button);
+      optionBox.append(button);
     });
 
-    backButton.disabled = state.current === 0;
-    nextButton.disabled = selected === undefined;
-    nextButton.textContent = state.current === total - 1 ? "Узнать результат ✨" : "Дальше →";
-    setError("quiz-error", "");
+    back.disabled = state.position === 0;
+    next.disabled = choice === undefined || state.submitting;
+    next.innerHTML = state.position === total - 1
+      ? 'Узнать результат <span aria-hidden="true">→</span>'
+      : 'Продолжить <span aria-hidden="true">→</span>';
+    showError("quiz-error", "");
   }
 
-  startButton.addEventListener("click", async () => {
-    startButton.disabled = true;
-    startButton.textContent = "Готовим вопросы...";
-    setError("intro-error", "");
+  start.addEventListener("click", async () => {
+    start.disabled = true;
+    start.textContent = "Загрузка...";
+    showError("intro-error", "");
     try {
       const response = await fetch("/api/questions", { cache: "no-store" });
-      if (!response.ok) throw new Error("Не удалось загрузить вопросы");
+      if (!response.ok) throw new Error("Сайт ещё не готов. Попробуй позже.");
       const data = await response.json();
-      if (!Array.isArray(data.questions) || !data.questions.length) throw new Error("Вопросы ещё не добавлены");
+      if (!Array.isArray(data.questions) || data.questions.length !== 8) {
+        throw new Error("Вопросы пока недоступны.");
+      }
+      if (!data.ready) {
+        throw new Error("Организатор ещё готовит тест. Загляни чуть позже.");
+      }
       state.questions = data.questions;
-      state.name = byId("player-name").value.trim().slice(0, 40) || "Любимая";
-      state.current = 0;
-      state.choices = {};
-      renderQuestion();
-      show("quiz");
-    } catch {
-      setError("intro-error", "Пока не удалось открыть игру. Проверь, что сайт подключён к Cloudflare Pages.");
+      state.selected = {};
+      state.position = 0;
+      render();
+      switchScene("quiz");
+    } catch (error) {
+      showError("intro-error", error.message || "Не удалось загрузить тест.");
     } finally {
-      startButton.disabled = false;
-      startButton.textContent = "Принимаю вызов ↗";
+      start.disabled = false;
+      start.innerHTML = '<span>Начать тест</span><span aria-hidden="true">→</span>';
     }
   });
 
-  backButton.addEventListener("click", () => {
-    if (state.current > 0) {
-      state.current -= 1;
-      renderQuestion();
-    }
+  back.addEventListener("click", () => {
+    if (state.submitting || state.position === 0) return;
+    state.position -= 1;
+    render();
   });
 
-  nextButton.addEventListener("click", async () => {
-    const current = state.questions[state.current];
-    if (state.choices[current.id] === undefined) return;
-    if (state.current < state.questions.length - 1) {
-      state.current += 1;
-      renderQuestion();
+  next.addEventListener("click", async () => {
+    if (state.submitting) return;
+    const current = state.questions[state.position];
+    if (!current || state.selected[current.id] === undefined) return;
+    if (state.position < state.questions.length - 1) {
+      state.position += 1;
+      render();
       return;
     }
 
-    nextButton.disabled = true;
-    nextButton.textContent = "Проверяем...";
-    setError("quiz-error", "");
+    state.submitting = true;
+    next.disabled = true;
+    back.disabled = true;
+    next.textContent = "Проверяем ответы...";
+    showError("quiz-error", "");
     try {
       const response = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: state.name,
-          answers: state.questions.map((question) => ({
-            id: question.id,
-            choice: state.choices[question.id]
-          }))
+          answers: state.questions.map(({ id }) => ({ id, choice: state.selected[id] }))
         })
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Не удалось сохранить ответы");
-      byId("result-icon").textContent = data.won ? "🎉" : "💌";
-      byId("result-title").textContent = data.won ? "Ты выиграла, любимая!" : "Совсем чуть-чуть не хватило!";
-      byId("result-description").textContent = data.won
-        ? "Все ответы верные! Твой приз — маникюр за мой счёт. Поздравляю, красотка! 💅"
-        : "В этот раз не все ответы правильные. Но твои ответы уже сохранены — организатор всё увидит. ♡";
-      byId("result-score").textContent = data.correctCount + " / " + data.total;
-      show("result");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Не удалось сохранить ответы. Попробуй ещё раз.");
+
+      $("result-title").textContent = data.won
+        ? "Ты выиграла оплату маникюра!"
+        : "Тест пройден";
+      $("result-description").textContent = data.won
+        ? "Все восемь ответов правильные. Маникюр — за мой счёт!"
+        : "В этот раз не все ответы оказались правильными, поэтому приз пока не выигран.";
+      $("result-score").textContent = data.correctCount + " / " + data.total;
+      $("result").classList.toggle("is-winner", Boolean(data.won));
+
+      const telegramMessage = data.won
+        ? "Я прошла твой тест! ❤️\nУ меня " + data.correctCount + " из " + data.total + " правильных ответов.\nЯ выиграла оплату маникюра! 💅"
+        : "Я прошла твой тест! ❤️\nУ меня " + data.correctCount + " из " + data.total + " правильных ответов.\nВ этот раз мне не удалось выиграть оплату маникюра.";
+      $("telegram-link").href = "https://t.me/exquown?text=" + encodeURIComponent(telegramMessage);
+      switchScene("result");
     } catch (error) {
-      setError("quiz-error", error.message || "Ошибка сохранения. Попробуй ещё раз.");
+      showError("quiz-error", error.message || "Не удалось сохранить ответы.");
     } finally {
-      nextButton.disabled = false;
-      nextButton.textContent = "Узнать результат ✨";
+      state.submitting = false;
+      back.disabled = state.position === 0;
+      next.disabled = false;
+      next.innerHTML = 'Узнать результат <span aria-hidden="true">→</span>';
     }
   });
 })();

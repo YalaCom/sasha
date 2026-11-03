@@ -1,113 +1,164 @@
 (() => {
   "use strict";
-  const byId = (id) => document.getElementById(id);
-  const loginPanel = byId("login-panel");
-  const dashboard = byId("dashboard");
-  const attemptsEl = byId("attempt-list");
-  let currentPassword = "";
 
-  function errorAt(elementId, message) {
-    const el = byId(elementId);
-    el.textContent = message || "";
-    el.hidden = !message;
+  const $ = (id) => document.getElementById(id);
+  let password = "";
+
+  function notify(id, message) {
+    const node = $(id);
+    node.textContent = message || "";
+    node.hidden = !message;
   }
 
-  function el(tag, className, value) {
+  function make(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
-    if (value !== undefined) node.textContent = String(value);
+    if (text !== undefined) node.textContent = String(text);
     return node;
   }
 
-  function render(records) {
-    byId("total-count").textContent = records.length;
-    byId("wins-count").textContent = records.filter((record) => record.won).length;
-    byId("losses-count").textContent = records.filter((record) => !record.won).length;
-    attemptsEl.replaceChildren();
+  async function api(method, extra = {}) {
+    const response = await fetch("/api/admin", {
+      method,
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password, ...extra })
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(json.error || "Ошибка соединения с сервером.");
+    return json;
+  }
+
+  function renderSettings(data) {
+    const select = $("q7-choice");
+    select.replaceChildren();
+    const placeholder = make("option", "", "Выбери правильный ответ");
+    placeholder.value = "";
+    select.append(placeholder);
+    (data.q7Options || []).forEach((label, index) => {
+      const option = make("option", "", label);
+      option.value = String(index);
+      select.append(option);
+    });
+    const configured = Number.isInteger(data.q7Choice);
+    select.value = configured ? String(data.q7Choice) : "";
+    $("setup-status").textContent = configured ? "ГОТОВО" : "НЕ НАСТРОЕН";
+    $("setup-status").classList.toggle("is-set", configured);
+    $("settings-info").textContent = configured
+      ? "Правильный вариант сохранён. Тест готов к прохождению."
+      : "Укажи правильный вариант до того, как отправишь ссылку жене.";
+  }
+
+  function renderAttempts(records) {
+    $("total-count").textContent = records.length;
+    $("wins-count").textContent = records.filter((item) => item.won).length;
+    $("losses-count").textContent = records.filter((item) => !item.won).length;
+    const list = $("attempt-list");
+    list.replaceChildren();
 
     if (!records.length) {
-      attemptsEl.append(el("div", "empty-state", "Пока нет ответов. Как только игра будет пройдена, результаты появятся здесь. ♡"));
+      list.append(make("div", "empty-history", "Пока ответов нет. После прохождения теста здесь появятся дата, ответы и результат."));
       return;
     }
-    records.forEach((record) => {
-      const card = el("article", "attempt-card");
-      const header = el("div", "attempt-header");
-      const time = record.submittedAt ? new Date(record.submittedAt).toLocaleString("ru-RU") : "Дата неизвестна";
-      header.append(el("strong", "attempt-name", record.name || "Любимая"));
-      header.append(el("span", "attempt-date", time));
-      header.append(el("span", "status " + (record.won ? "status-won" : "status-lost"), record.won ? "💅 ВЫИГРАЛА" : "НЕ ВЫИГРАЛА"));
-      card.append(header);
-      card.append(el("p", "attempt-score", "Правильных ответов: " + record.correctCount + " из " + record.total));
 
-      const details = document.createElement("details");
-      const summary = document.createElement("summary");
-      summary.textContent = "Посмотреть все ответы";
-      details.append(summary);
+    for (const record of records) {
+      const article = make("article", "attempt-card");
+      const top = make("div", "attempt-top");
+      const identity = make("div", "attempt-identity");
+      identity.append(make("h3", "", "Любимая жена"));
+      const date = new Date(record.submittedAt);
+      const timestamp = Number.isNaN(date.getTime())
+        ? "Время неизвестно"
+        : date.toLocaleString("ru-RU", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      identity.append(make("p", "attempt-date", "Ответила: " + timestamp));
+      top.append(identity);
+      top.append(make("span", "result-pill " + (record.won ? "result-win" : "result-loss"), record.won ? "ПОБЕДА" : "БЕЗ ПОБЕДЫ"));
+      article.append(top);
+      article.append(make("div", "attempt-score", "Правильно: " + record.correctCount + " из " + record.total));
+
+      const details = make("details", "answer-details");
+      details.append(make("summary", "", "Показать все ответы"));
+      const answers = make("div", "admin-answers");
       (record.answers || []).forEach((answer, index) => {
-        const row = el("div", "answer-record");
-        row.append(el("p", "", (index + 1) + ". " + answer.question));
-        row.append(el("div", "selected-answer", "Её ответ: " + answer.selected + (answer.isCorrect ? " ✓" : " ✗")));
-        if (!answer.isCorrect) row.append(el("div", "correct-answer", "Правильный ответ: " + answer.correct));
-        details.append(row);
+        const row = make("div", "answer-record");
+        row.append(make("div", "answer-record-title", (index + 1) + ". " + answer.question));
+        const answerChoice = make("div", "answer-record-choice", "Её ответ: " + answer.selected);
+        answerChoice.append(make("span", "answer-indicator " + (answer.isCorrect ? "correct" : "wrong"), answer.isCorrect ? "Верно" : "Неверно"));
+        row.append(answerChoice);
+        if (!answer.isCorrect) row.append(make("p", "expected-answer", "Правильный ответ: " + answer.correct));
+        answers.append(row);
       });
-      card.append(details);
-      attemptsEl.append(card);
-    });
-  }
-
-  async function load(password) {
-    errorAt("login-error", "");
-    errorAt("dashboard-error", "");
-    const response = await fetch("/api/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      body: JSON.stringify({ password })
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (response.status === 401) throw new Error("Неверный пароль администратора.");
-      throw new Error(body.error || "Не удалось загрузить данные из Cloudflare.");
+      details.append(answers);
+      article.append(details);
+      list.append(article);
     }
-    render(Array.isArray(body.submissions) ? body.submissions : []);
   }
 
-  byId("login-form").addEventListener("submit", async (event) => {
+  async function refresh() {
+    notify("dashboard-error", "");
+    const data = await api("POST");
+    renderSettings(data);
+    renderAttempts(Array.isArray(data.submissions) ? data.submissions : []);
+  }
+
+  $("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const value = byId("admin-password").value;
-    const button = byId("login-button");
+    password = $("admin-password").value;
+    const button = $("login-button");
     button.disabled = true;
     button.textContent = "Проверяем...";
+    notify("login-error", "");
     try {
-      await load(value);
-      currentPassword = value;
-      byId("admin-password").value = "";
-      loginPanel.hidden = true;
-      dashboard.hidden = false;
+      await refresh();
+      $("login-panel").hidden = true;
+      $("dashboard").hidden = false;
+      $("admin-password").value = "";
     } catch (error) {
-      errorAt("login-error", error.message);
+      password = "";
+      notify("login-error", error.message);
     } finally {
       button.disabled = false;
-      button.textContent = "Посмотреть ответы →";
+      button.innerHTML = 'Войти <span aria-hidden="true">→</span>';
     }
   });
 
-  byId("refresh-button").addEventListener("click", async () => {
-    const button = byId("refresh-button");
+  $("settings-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const value = $("q7-choice").value;
+    if (value === "") return;
+    const button = $("save-settings-button");
+    notify("settings-error", "");
+    $("settings-info").textContent = "";
+    button.disabled = true;
+    button.textContent = "Сохраняем...";
+    try {
+      await api("PUT", { q7Choice: Number(value) });
+      await refresh();
+      $("settings-info").textContent = "Сохранено. Жена может проходить тест.";
+    } catch (error) {
+      notify("settings-error", error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Сохранить";
+    }
+  });
+
+  $("refresh-button").addEventListener("click", async () => {
+    const button = $("refresh-button");
     button.disabled = true;
     try {
-      await load(currentPassword);
+      await refresh();
     } catch (error) {
-      errorAt("dashboard-error", error.message);
+      notify("dashboard-error", error.message);
     } finally {
       button.disabled = false;
     }
   });
 
-  byId("logout-button").addEventListener("click", () => {
-    currentPassword = "";
-    attemptsEl.replaceChildren();
-    dashboard.hidden = true;
-    loginPanel.hidden = false;
+  $("logout-button").addEventListener("click", () => {
+    password = "";
+    $("dashboard").hidden = true;
+    $("login-panel").hidden = false;
+    $("attempt-list").replaceChildren();
   });
 })();
