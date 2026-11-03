@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#171320">
+  <title>Панель администратора · Love Quest</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/admin.js" defer></script>
+</head>
+<body class="admin-page">
+  <div class="admin-layout">
+    <header class="admin-nav">
+      <a class="wordmark" href="/">♡ <span>love quest</span></a>
+      <a class="nav-back" href="/">← Вернуться на сайт</a>
+    </header>
+    <main class="admin-main">
+      <div class="admin-heading">
+        <span class="section-kicker">ТОЛЬКО ДЛЯ ОРГАНИЗАТОРА</span>
+        <h1>Панель <em>администратора</em></h1>
+        <p>Здесь сохраняются все попытки, выбранные ответы и результат игры.</p>
+      </div>
+
+      <section id="login-panel" class="admin-login">
+        <div class="lock-graphic" aria-hidden="true">🔐</div>
+        <h2>Вход в админку</h2>
+        <p>Введи пароль, который установишь в Cloudflare.</p>
+        <form id="login-form">
+          <label class="field-label" for="admin-password">Пароль администратора</label>
+          <input id="admin-password" class="text-input" type="password" autocomplete="current-password" required placeholder="••••••••••••">
+          <button id="login-button" class="button button-primary button-wide" type="submit">Посмотреть ответы →</button>
+        </form>
+        <p id="login-error" class="error-message" role="alert" hidden></p>
+      </section>
+
+      <section id="dashboard" hidden>
+        <div class="admin-toolbar">
+          <div class="stats">
+            <div class="stat"><strong id="total-count">0</strong><span>попыток</span></div>
+            <div class="stat"><strong id="wins-count">0</strong><span>побед</span></div>
+            <div class="stat"><strong id="losses-count">0</strong><span>без победы</span></div>
+          </div>
+          <div class="toolbar-buttons">
+            <button class="button button-outline" id="refresh-button" type="button">↻ Обновить</button>
+            <button class="button button-quiet" id="logout-button" type="button">Выйти</button>
+          </div>
+        </div>
+        <h2 class="list-title">История ответов <span>(последние 100)</span></h2>
+        <p id="dashboard-error" class="error-message" role="alert" hidden></p>
+        <div id="attempt-list" class="attempt-list"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
