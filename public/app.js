@@ -19,7 +19,7 @@
       $(name).hidden = name !== id;
       $(name).classList.toggle("is-active", name === id);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
   }
 
   function render() {
@@ -74,13 +74,10 @@
     showError("intro-error", "");
     try {
       const response = await fetch("/api/questions", { cache: "no-store" });
-      if (!response.ok) throw new Error("Сайт ещё не готов. Попробуй позже.");
+      if (!response.ok) throw new Error("Не удалось загрузить вопросы. Попробуй ещё раз.");
       const data = await response.json();
       if (!Array.isArray(data.questions) || data.questions.length !== 8) {
         throw new Error("Вопросы пока недоступны.");
-      }
-      if (!data.ready) {
-        throw new Error("Организатор ещё готовит тест. Загляни чуть позже.");
       }
       state.questions = data.questions;
       state.selected = {};
